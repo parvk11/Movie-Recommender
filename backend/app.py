@@ -6,14 +6,11 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import joblib
-import psutil
+
 import os
 import logging
 logging.basicConfig(level=logging.INFO)
-def log_memory_usage():
-    process = psutil.Process(os.getpid())
-    mem_info = process.memory_info()
-    logging.info(f"Memory usage: {mem_info.rss / (1024 * 1024):.2f} MB")
+
 
 app = FastAPI()
 
@@ -163,20 +160,16 @@ def get_user_recommendations(user_ratings, X, b, lam, iterations, user_w):
 async def recommend(ratings : dict):
     ratings_from_user = ratings
 
-    log_memory_usage()
 
     rm_names, rm_inds, rm_mids, us_ratings = make_user_ratings(ratings_from_user)
     my_ratings_normal = us_ratings - average_ratings
 
-    log_memory_usage()
 
     my_weights = get_user_recommendations(my_ratings_normal, X, b, lam = 1, iterations = 20,user_w = user_w)
 
-    log_memory_usage()
 
     my_new_predicted = predict_ratings_user(X,my_weights,average_ratings)
 
-    log_memory_usage()
 
     my_new_predicted = tf.squeeze(my_new_predicted)
     newix = tf.argsort(my_new_predicted, direction = "DESCENDING")
@@ -184,7 +177,6 @@ async def recommend(ratings : dict):
     best = best.sort_values("My Prediction", ascending = False)
     keys = best["title"].tolist()
 
-    log_memory_usage()
     
     # values = best["My Prediction"].tolist()
     # new_dict = {}
