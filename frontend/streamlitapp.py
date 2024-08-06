@@ -2,11 +2,14 @@ import streamlit as st
 import joblib
 import requests
 import pandas as pd
+import os
 
 
 st.title('Movie Recommender')
 
-model = joblib.load("movie-recommender.pkl")
+
+
+model = joblib.load('movie-recommender.pkl')
 movies = {}
 
 ratings_df = model["ratings_df"]
