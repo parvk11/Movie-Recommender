@@ -6,8 +6,17 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 import joblib
+import psutil
+import os
+import logging
+logging.basicConfig(level=logging.INFO)
+def log_memory_usage():
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    logging.info(f"Memory usage: {mem_info.rss / (1024 * 1024):.2f} MB")
 
 app = FastAPI()
+
 
 model = joblib.load("movie-recommender.pkl")
 
@@ -36,6 +45,8 @@ average_ratings = model["average_ratings"]
 all_movies = model['all_movies']
 num_features = X.shape[1]
 num_movies = X.shape[0]
+user_w = tf.Variable(tf.random.normal((1,  num_features),dtype=tf.float64),  name='user_w')
+optimizer = keras.optimizers.Adam(learning_rate=.1)
 
 def show_top(topindices, predicted_user_movies, df2,rated_movie_ids):
     newdf2 = df2.copy()
@@ -131,37 +142,49 @@ def update_ratings(movie_name,rating,movie_ratings, all_movies):
     movie_ratings[key] = rating
     return movie_ratings
 
-def get_user_recommendations(user_ratings, X, b, lam, iterations):
+@tf.function
+def get_user_recommendations(user_ratings, X, b, lam, iterations, user_w):
     
-    optimizer = keras.optimizers.Adam(learning_rate=.1)
-    user_w = tf.Variable(tf.random.normal((1,  num_features),dtype=tf.float64),  name='user_w')
     user_r = [0]*num_movies
-    user_r = [1 if r > 0 else 0 for r in user_ratings]
-    user_r = np.array(user_r)
+    user_ratings_tensor = tf.convert_to_tensor(user_ratings, dtype=tf.float64)
+    user_r = tf.cast(user_ratings_tensor > 0, dtype=tf.float64)
     for i in range(iterations):
         with tf.GradientTape() as tape:
-            error = ((tf.linalg.matmul(X,tf.transpose(user_w)) )- user_ratings) * user_r
-            cost = .5*(tf.reduce_sum(error**2)) + (lam/2) *  tf.reduce_sum(user_w**2)
+            error = ((tf.matmul(X,tf.transpose(user_w)))- tf.reshape(user_ratings, (-1,1))) * tf.reshape(user_r, (-1,1))
+            cost = (tf.reduce_sum(tf.square(error)) + (lam/2) *  tf.reduce_sum(tf.square(user_w)))
         gradients = tape.gradient(cost, [user_w])
         optimizer.apply_gradients(zip(gradients, [user_w]))
         if(i % 10 == 0):
             print(f'Cost at epoch {i}: {cost}')
     return user_w
-
     
 
 @app.post("/showmovies")
 async def recommend(ratings : dict):
     ratings_from_user = ratings
+
+    log_memory_usage()
+
     rm_names, rm_inds, rm_mids, us_ratings = make_user_ratings(ratings_from_user)
     my_ratings_normal = us_ratings - average_ratings
-    my_weights = get_user_recommendations(my_ratings_normal, X, b, lam = 1, iterations = 20)
+
+    log_memory_usage()
+
+    my_weights = get_user_recommendations(my_ratings_normal, X, b, lam = 1, iterations = 20,user_w = user_w)
+
+    log_memory_usage()
+
     my_new_predicted = predict_ratings_user(X,my_weights,average_ratings)
+
+    log_memory_usage()
+
     my_new_predicted = tf.squeeze(my_new_predicted)
     newix = tf.argsort(my_new_predicted, direction = "DESCENDING")
     best = show_top(topindices= newix, predicted_user_movies= my_new_predicted, df2 = df2, rated_movie_ids = rm_mids)
     best = best.sort_values("My Prediction", ascending = False)
     keys = best["title"].tolist()
+
+    log_memory_usage()
     
     # values = best["My Prediction"].tolist()
     # new_dict = {}
