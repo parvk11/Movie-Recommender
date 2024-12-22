@@ -155,6 +155,9 @@ def get_user_recommendations(user_ratings, X, b, lam, iterations, user_w):
             print(f'Cost at epoch {i}: {cost}')
     return user_w
     
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
 
 @app.post("/showmovies")
 async def recommend(ratings : dict):
