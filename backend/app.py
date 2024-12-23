@@ -169,11 +169,11 @@ def get_user_recommendations(user_ratings, X, b, lam, iterations, user_w):
 
 
     
-@app.get("/")
+@app.get("/api/test")
 async def root():
     return {"message": "Hello World"}
 
-@app.post("/showmovies")
+@app.post("/api/showmovies")
 async def recommend(ratings : dict):
     ratings_from_user = ratings
 
