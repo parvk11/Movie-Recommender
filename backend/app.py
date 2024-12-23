@@ -9,10 +9,22 @@ import joblib
 
 import os
 import logging
+from fastapi.middleware.cors import CORSMiddleware
+
+
 logging.basicConfig(level=logging.INFO)
 
 
 app = FastAPI()
+
+origins = ["*"]
+app.add_middleware(
+ CORSMiddleware,
+ allow_origins=origins,
+ allow_credentials=True,
+ allow_methods=["*"],
+ allow_headers=["*"],
+)
 
 
 model = joblib.load("movie-recommender.pkl")
@@ -154,6 +166,8 @@ def get_user_recommendations(user_ratings, X, b, lam, iterations, user_w):
         if(i % 10 == 0):
             print(f'Cost at epoch {i}: {cost}')
     return user_w
+
+
     
 @app.get("/")
 async def root():
