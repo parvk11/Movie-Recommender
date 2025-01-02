@@ -44,7 +44,7 @@ if(button):
 st.session_state
 
 if(predict):
-    url = 'https://movie-recommender-bsxh.onrender.com/showmovies'
+    url = 'http://3.89.162.50/api/showmovies'
     response = requests.post(url = url, json = dict(st.session_state))
     
     newdf = pd.read_json(response.json(), orient="split")
