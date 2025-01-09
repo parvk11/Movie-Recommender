@@ -6,6 +6,7 @@ import os
 
 
 st.title('Movie Recommender')
+apiurl = 'http://localhost:8000/'
 
 
 
@@ -44,10 +45,12 @@ if(button):
 st.session_state
 
 if(predict):
-    url = 'http://3.89.162.50/api/showmovies'
+    # url = 'http://3.89.162.50/api/showmovies'
+    url = 'http://localhost:8000/api/showmovies'
     response = requests.post(url = url, json = dict(st.session_state))
     
     newdf = pd.read_json(response.json(), orient="split")
+    newdf = newdf.drop(columns=['count', 'movieId']).reset_index(drop=True)
     st.table(newdf)
     
 
