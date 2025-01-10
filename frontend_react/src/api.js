@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://54.91.211.65/", // Your FastAPI URL
+  baseURL: "https://54.91.211.65/", // Your FastAPI URL
 });
 
 // Updated login function
