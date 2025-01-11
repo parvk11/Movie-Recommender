@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://54.91.211.65/", // Your FastAPI URL
+  baseURL: " https://movierecommendapi.duckdns.org", // Your FastAPI URL
 });
 
 // Updated login function
