@@ -1,7 +1,7 @@
 Movie Recommender System
 
-running at https://movierecommenderparvk.streamlit.app/   
--very slow, working on finding a free way to host my API
+front-end currently hosted on Vercel - https://movie-recommender-ten-blue.vercel.app/
+
 
 To run locally: 
 
